@@ -1,0 +1,45 @@
+一.环境准备
+   1.安装zabbix源
+
+#rpm -ivh https://mirrors.aliyun.com/zabbix/zabbix/3.5/rhel/7/x86_64/zabbix-release-3.5-1.el7.noarch.rpm
+
+二.安装zabbix相关组件
+# yum -y install zabbix-server-mysql zabbix-web-mysql zabbix-agent mariadb maraidb-server
+   2.为zabbix创建数据库
+启动mariadb
+#systemctl start mariadb
+#systemctl enable mariadb
+登录mysql
+# mysql -uroot -p
+为了更好的支持中文，将数据库的编码字符集设置为utf8
+登录
+MariaDB [(none)]> create database zabbix default character set utf8;
+Query OK, 1 row affected (0.00 sec)
+MariaDB [(none)]> grant all  on zabbix.* to zabbix@localhost identified by '123';
+MariaDB [(none)]>quit；
+   3.导入zabbix初始数据库：
+#zcat /usr/share/doc/zabbix-server-mysql-4.0.0/create.sql.gz | mysql -uzabbix -p123  zabbix
+
+   4.编辑zabbix-server配置文件，配置数据库
+# vim /etc/zabbix/zabbix_server.conf
+搜索并修改以下内容：
+DBHost=localhost
+DBName=zabbix
+DBUser=zabbix
+DBPassword=123
+修改完毕后保存退出
+
+   5.关闭防火墙：
+# systemctl stop firewalld
+#setenforce 0
+
+   6.启动所有服务
+# systemctl start httpd zabbix-server zabbix-agent
+# systemctl enable httpd zabbix-server zabbix-agent
+查看相关端口是否监听：
+#netstat -ntlp | grep 10051
+
+# netstat -ntlp | grep 10050
+
+   7.端口监听成功后浏览器访问：
+http://你服务器的ip地址/zabbix/
